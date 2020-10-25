@@ -243,20 +243,36 @@ stores.features.forEach(function(store, i) {
 
 map.on('load', function(e) {
     /* Add the data to your map as a layer */
-    map.addLayer({
-        "id": "locations",
-        "type": "symbol",
-        /* Add a GeoJSON source containing place coordinates and information. */
-        "source": {
-            "type": "geojson",
-            "data": stores
-        },
-        "layout": {
-            "icon-image": "restaurant-15",
-            "icon-allow-overlap": true,
-        }
+    map.addSource('places', {
+        type: 'geojson',
+        data: stores
+
+
     });
+
+
     buildLocationList(stores);
+
+    function addMarkers() {
+        /* For each feature in the GeoJSON object above: */
+        stores.features.forEach(function(marker) {
+            /* Create a div element for the marker. */
+            var el = document.createElement('div');
+            /* Assign a unique `id` to the marker. */
+            el.id = "marker-" + marker.properties.id;
+            /* Assign the `marker` class to each marker for styling. */
+            el.className = 'marker';
+
+            /**
+             * Create a marker using the div element
+             * defined above and add it to the map.
+             **/
+            new mapboxgl.Marker(el, { offset: [0, -23] })
+                .setLngLat(marker.geometry.coordinates)
+                .addTo(map);
+        });
+    }
+    addMarkers();
 });
 
 
@@ -347,6 +363,21 @@ function buildLocationList(data) {
                     var listing = document.getElementById('listing-' + clickedPoint.properties.id);
                     listing.classList.add('active');
                 }
+
+                el.addEventListener('click', function(e) {
+                    /* Fly to the point */
+                    flyToStore(marker);
+                    /* Close all other popups and display popup for clicked store */
+                    createPopUp(marker);
+                    /* Highlight listing in sidebar */
+                    var activeItem = document.getElementsByClassName('active');
+                    e.stopPropagation();
+                    if (activeItem[0]) {
+                        activeItem[0].classList.remove('active');
+                    }
+                    var listing = document.getElementById('listing-' + marker.properties.id);
+                    listing.classList.add('active');
+                });
             });
         }
     });
